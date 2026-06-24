@@ -1,6 +1,9 @@
+import os
+import threading
 import telebot
 from telebot import types
 from google import genai
+from flask import Flask
 
 # --- CONFIGURATION ---
 BOT_TOKEN = "8014371504:AAHn0OfZwZtlA6goXb8151zX4YM8mshbsDg"
@@ -11,6 +14,12 @@ WHATSAPP_NUMBER = "94701173962"
 
 bot = telebot.TeleBot(BOT_TOKEN)
 client = genai.Client(api_key=GEMINI_KEY)
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
 
 SYSTEM_PROMPT = f"""
 You are the official AI Assistant for 'Gaming Kavistacks - Optimize Store'.
@@ -116,5 +125,12 @@ def handle_text(message):
         print(f"AI Error: {e}")
         bot.reply_to(message, f"AI busy. Please contact:\nCall: {CONTACT_PHONE}\nWhatsApp: +{WHATSAPP_NUMBER}")
 
-print("Bot is running...")
+def run_bot():
+    print("Bot is running...")
+    bot.infinity_polling()
+
+if __name__ == "__main__":
+    threading.Thread(target=run_bot).start()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
 bot.infinity_polling()
