@@ -114,16 +114,31 @@ def callback_query(call):
 
 @bot.message_handler(func=lambda message: True)
 def handle_text(message):
-    try:
-        full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {message.text}"
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
-            contents=full_prompt
-        )
-        bot.reply_to(message, response.text)
-    except Exception as e:
-        print(f"AI Error: {e}")
-        bot.reply_to(message, f"AI busy. Please contact:\nCall: {CONTACT_PHONE}\nWhatsApp: +{WHATSAPP_NUMBER}")
+    full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {message.text}"
+    
+    # Try multiple models (fallback)
+    models_to_try = [
+        "gemini-2.5-flash-lite",
+        "gemini-flash-lite-latest",
+        "gemini-2.0-flash-lite",
+        "gemini-2.5-flash",
+        "gemini-flash-latest"
+    ]
+    
+    for model_name in models_to_try:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=full_prompt
+            )
+            bot.reply_to(message, response.text)
+            return
+        except Exception as e:
+            print(f"Model {model_name} failed: {e}")
+            continue
+    
+    # All models failed
+    bot.reply_to(message, f"AI busy right now. Please contact:\nCall: {CONTACT_PHONE}\nWhatsApp: +{WHATSAPP_NUMBER}")
 
 def run_bot():
     print("Bot is running...")
